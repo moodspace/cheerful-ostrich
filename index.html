@@ -1,0 +1,183 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>The HTML5 Herald</title>
+  <meta name="description" content="The HTML5 Herald">
+  <meta name="author" content="SitePoint">
+
+  <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap.min.css">
+
+  <!-- Optional theme -->
+  <link rel="stylesheet" href="./node_modules/bootstrap-material-design/dist/css/bootstrap-material-design.min.css">
+  <link rel="stylesheet" href="./node_modules/bootstrap-material-design/dist/css/ripples.min.css">
+  <link rel="stylesheet" href="./node_modules/font-awesome/css/font-awesome.min.css">
+
+  <script src="/node_modules/bootstrap-material-design/bower_components/jquery/dist/jquery.min.js"></script>
+  <script src="/node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+  <script src="/node_modules/bootstrap-material-design/dist/js/material.min.js"></script>
+  <script src="/node_modules/bootstrap-material-design/dist/js/ripples.min.js"></script>
+  <script type='text/javascript' src='https://cn.bing.com/mapspreview/sdk/mapcontrol?branch=release'></script>
+</head>
+
+<body onload="setLocation(42.4534492,-76.4756914);">
+  <div class="navbar navbar-warning" style="margin: 0">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-responsive-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="javascript:void(0)">Cuddly Giggle</a>
+      </div>
+      <div class="navbar-collapse collapse navbar-responsive-collapse">
+        <form class="navbar-form navbar-left">
+          <div class="form-group">
+            <input type="text" class="form-control col-sm-8" placeholder="Search">
+          </div>
+        </form>
+        <ul class="nav navbar-nav">
+          <li><a id="useMyLocation" href="javascript:void(0)">
+            <i class="fa fa-location-arrow" aria-hidden="true"></i>
+          </a></li>
+        </ul>
+        <ul class="nav navbar-nav navbar-right">
+          <li class="dropdown">
+            <a href="http://fezvrasta.github.io/bootstrap-material-design/bootstrap-elements.html" data-target="#" class="dropdown-toggle" data-toggle="dropdown">More
+              <b class="caret"></b></a>
+            <ul class="dropdown-menu">
+              <li><a href="javascript:void(0)">Action</a></li>
+              <li><a href="javascript:void(0)">Another action</a></li>
+              <li><a href="javascript:void(0)">Something else here</a></li>
+              <li class="divider"></li>
+              <li><a href="javascript:void(0)">Separated link</a></li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div style="margin: 0; padding: 0;">
+    <a class="btn btn-inverse btn-fab" style="position: absolute; right: 10px; top: 100px;">=</a>
+    <div id='myMap' style='height: 100vh;' class="row"></div>
+    <div class="row" style="height: 50vh; position: absolute; left: 0; right: 0; top: 50vh;">
+      <div class="col-lg-12">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            Display Name
+          </div>
+          <h5>
+            Images
+          </h5>
+          <div class="row">
+            <div class="col-lg-3" style="padding: 0">
+              <img style="border: 5px solid black;" width="100%" src="/node_modules/bootstrap-material-design/demo/imgs/banner.jpg" />
+            </div>
+            <div class="col-lg-3" style="padding: 0">
+              <img style="border: 5px solid black; border-left: none;" width="100%" src="/node_modules/bootstrap-material-design/demo/imgs/banner.jpg" />
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-lg-3" style="padding: 0">
+              <img style="border: 5px solid black; border-top: none;" width="100%" src="/node_modules/bootstrap-material-design/demo/imgs/banner.jpg" />
+            </div>
+            <div class="col-lg-3" style="padding: 0">
+              <img style="border: 5px solid black; border-left: none; border-top: none;" width="100%" src="/node_modules/bootstrap-material-design/demo/imgs/banner.jpg" />
+            </div>
+          </div>
+          <div class="btn-group btn-group-justified">
+            <a class="btn btn-raised btn-primary">&lt;</a>
+            <a class="btn btn-default">
+              <i class="fa fa-bicycle" aria-hidden="true"></i>
+            </a>
+            <a class="btn btn-default">
+              <i class="fa fa-question" aria-hidden="true"></i>
+            </a>
+            <a class="btn btn-raised btn-primary">&gt;</a>
+          </div>
+          <div id="panel-details">
+            <table>
+              <tbody>
+                <tr>
+                  <th>
+                    Location
+                  </th>
+                  <td>
+                    [Building]
+                  </td>
+                </tr>
+                <tr>
+                  <th>
+                    Rack Number
+                  </th>
+                  <td>
+                    [Capacity]
+                  </td>
+                </tr>
+                <tr>
+                  <th>
+                    Misc
+                  </th>
+                  <td>
+                    [isIndoor/hasRoof] [Shape] [Vacancy (More)]
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Latest compiled and minified JavaScript -->
+  <script>
+    $.material.init();
+    var map;
+
+    function getLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(showPosition);
+        }
+    }
+
+    function showPosition(position) {
+      setLocation(position.coords.latitude, position.coords.longitude);
+    }
+
+    function setLocation(lat, long) {
+      map = new Microsoft.Maps.Map($('#myMap')[0], {
+          credentials: 'ArnfSpPwwHiY79noh8ZgFUjEfzp217VUV4So9rQfyt-aXOohl_sXbxtfz9mr6sLp',
+          center: new Microsoft.Maps.Location(lat, long),
+          mapTypeId: Microsoft.Maps.MapTypeId.aerial,
+          zoom: 15
+      });
+
+      Microsoft.Maps.Events.addHandler(map, 'viewchangeend', function () {
+        $.get("http://127.0.0.1:8000/v1/parkings", {
+          latitude: Number(map.getCenter().latitude),
+          longitude: Number(map.getCenter().longitude),
+          range: 1000
+        }, function(data) {
+          console.log(data);
+        });
+      });
+    }
+
+    $(document).ready(function() {
+      $("#useMyLocation").click(function() {
+        getLocation();
+      });
+
+      // var map = new Microsoft.Maps.Map(document.getElementById('myMap'), {
+      //     credentials: 'Your Bing Maps Key'
+      // });
+      // var pushpin = new Microsoft.Maps.Pushpin(map.getCenter(), null);
+      // map.entities.push(pushpin);
+    });
+  </script>
+</body>
+</html>
