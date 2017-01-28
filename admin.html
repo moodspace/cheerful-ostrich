@@ -13,10 +13,11 @@
 
   <!-- Optional theme -->
   <link rel="stylesheet" href="./node_modules/bootstrap-material-design/dist/css/bootstrap-material-design.min.css">
-  <link rel="stylesheet" href="./node_modules/bootstrap-material-design/dist/css/ripples.min.css">
+  <link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap.min.css">
 
   <script src="/node_modules/bootstrap-material-design/bower_components/jquery/dist/jquery.min.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+  <script src="/node_modules/bootstrap/dist/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+  <script src="/node_modules/lodash/lodash.min.js"></script>
   <script src="/node_modules/bootstrap-material-design/dist/js/material.min.js"></script>
   <script src="/node_modules/bootstrap-material-design/dist/js/ripples.min.js"></script>
 </head>
@@ -225,6 +226,21 @@
         </div>
       </div>
     </form>
+
+    <div class="h3">Import from Cornell Open Data</div>
+    <form>
+      <div class="col-lg-12">
+        <div class="form-group label-static">
+          <label for="CODJSON" class="control-label">JSON</label>
+          <textarea class="form-control" rows="3" id="CODJSON"></textarea>
+        </div>
+      </div>
+      <div class="col-lg-12 text-right">
+        <div class="form-group">
+          <a href="javascript:void(0)" id="importCOD" class="btn btn-default">Import</a>
+        </div>
+      </div>
+    </form>
   </div>
   <!-- Latest compiled and minified JavaScript -->
 
@@ -235,7 +251,7 @@
         $(this).click(function() {
           var lat = $(this).parent().prev().find("input[name='latitude']").val();
           var long = $(this).parent().prev().find("input[name='longitude']").val();
-          window.open("https://bing.com/maps/default.aspx?lvl=25&cp="+lat+"~"+long);
+          window.open("https://www.google.com/maps/@"+lat+","+long+",18z");
         });
       });
 
@@ -295,6 +311,59 @@
         }).done(function(data) {
           console.log(data);
         });
+      });
+
+      $("#importCOD").click(function() {
+        var form = $(this).parent().parent().parent();
+        var codjson = JSON.parse(form.find("#CODJSON").val());
+        var regions = _.uniq(_.map(codjson, function(location) {
+          return location.Category;
+        }));
+
+        var counter = 0;
+
+        _.each(regions, function(regionName) {
+          $.ajax({
+            method: "POST",
+            url: "http://127.0.0.1:8000/v1/regions",
+            data: JSON.stringify({
+              GeoJSON: "",
+              description: "",
+              display_name: regionName
+            }),
+            contentType: "application/json"
+          }).done(function(data) {
+            counter++;
+            if (counter === regions.length) {
+              // add locations
+              $.getJSON("http://127.0.0.1:8000/v1/regions", function (regionsList) {
+                var interests = _.map(codjson, function(location) {
+                  return {
+                    display_name: location.Name,
+                    latitude: location.Latitude,
+                    longitude: location.Longitude,
+                    interest_type: 0,
+                    description: location.Notes,
+                    region:	_.find(regionsList, {display_name: location.Category}).region_id,
+                    image: location.ImageURL
+                  };
+                });
+
+                _.each(interests, function(interest) {
+                  $.ajax({
+                    method: "POST",
+                    url: "http://127.0.0.1:8000/v1/interests",
+                    data: JSON.stringify(interest),
+                    contentType: "application/json"
+                  }).done(function(data) {
+                    console.log(data);
+                  });
+                });
+              });
+            }
+          });
+        });
+
       });
     });
   </script>
