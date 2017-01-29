@@ -241,6 +241,21 @@
         </div>
       </div>
     </form>
+
+    <div class="h3">Import from Cornell Open Data (Raw Coordinates)</div>
+    <form>
+      <div class="col-lg-12">
+        <div class="form-group label-static">
+          <label for="CODCoordsJSON" class="control-label">JSON</label>
+          <textarea class="form-control" rows="3" id="CODCoordsJSON"></textarea>
+        </div>
+      </div>
+      <div class="col-lg-12 text-right">
+        <div class="form-group">
+          <a href="javascript:void(0)" id="importCODCoords" class="btn btn-default">Import</a>
+        </div>
+      </div>
+    </form>
   </div>
   <!-- Latest compiled and minified JavaScript -->
 
@@ -361,6 +376,32 @@
                 });
               });
             }
+          });
+        });
+
+      });
+
+      $("#importCODCoords").click(function() {
+        var form = $(this).parent().parent().parent();
+        var codjson = JSON.parse(form.find("#CODCoordsJSON").val());
+
+        _.each(codjson, function(p) {
+          $.ajax({
+            method: "POST",
+            url: "http://127.0.0.1:8000/v1/parkings",
+            data: JSON.stringify({
+              latitude: p.Latitude,
+              longitude: p.Longitude,
+              description: "",
+              display_name: "",
+              capacity: 5,
+              region: 1,
+              interest: 1,
+              image: ""
+            }),
+            contentType: "application/json"
+          }).done(function(data) {
+            console.log(data);
           });
         });
 

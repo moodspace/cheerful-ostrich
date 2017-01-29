@@ -16,16 +16,18 @@
   <link rel="stylesheet" href="./node_modules/bootstrap-material-design/dist/css/bootstrap-material-design.min.css">
   <link rel="stylesheet" href="./node_modules/bootstrap-material-design/dist/css/ripples.min.css">
   <link rel="stylesheet" href="./node_modules/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="./node_modules/animate.css/animate.min.css">
 
   <script src="/node_modules/bootstrap-material-design/bower_components/jquery/dist/jquery.min.js"></script>
   <script src="/node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+  <script src="/node_modules/lodash/lodash.min.js"></script>
   <script src="/node_modules/bootstrap-material-design/dist/js/material.min.js"></script>
   <script src="/node_modules/bootstrap-material-design/dist/js/ripples.min.js"></script>
-  <script type='text/javascript' src='https://cn.bing.com/mapspreview/sdk/mapcontrol?branch=release'></script>
+  <script type='text/javascript' src='https://www.bing.com/api/maps/mapcontrol?branch=release'></script>
 </head>
 
 <body onload="setLocation(42.4534492,-76.4756914);">
-  <div class="navbar navbar-warning" style="margin: 0">
+  <div class="navbar navbar-warning" style="margin: 0; width: 100%; z-index: 100; position: fixed;">
     <div class="container-fluid">
       <div class="navbar-header">
         <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-responsive-collapse">
@@ -38,7 +40,7 @@
       <div class="navbar-collapse collapse navbar-responsive-collapse">
         <form class="navbar-form navbar-left">
           <div class="form-group">
-            <input type="text" class="form-control col-sm-8" placeholder="Search">
+            <input id="search" type="text" class="form-control col-sm-8" placeholder="Search">
           </div>
         </form>
         <ul class="nav navbar-nav">
@@ -64,74 +66,45 @@
       </div>
     </div>
   </div>
-  <div style="margin: 0; padding: 0;">
+  <div style="margin: 0; padding: 0;" class="row">
     <a class="btn btn-inverse btn-fab" style="position: absolute; right: 10px; top: 100px;">=</a>
-    <div id='myMap' style='height: 100vh;' class="row"></div>
-    <div class="row" style="height: 50vh; position: absolute; left: 0; right: 0; top: 50vh;">
-      <div class="col-lg-12">
-        <div class="panel panel-default">
-          <div class="panel-heading">
-            Display Name
+    <div class="col-lg-12" id='myMap' style='height: 100vh;'></div>
+    <div class="col-lg-12" style="position: fixed; top: 100vh;">
+      <div id="parkingInfoPanel" style="position: relative;" class="panel panel-default">
+        <div class="container">
+          <img id="parking-image" width="100%" src="/node_modules/bootstrap-material-design/demo/imgs/banner.jpg" />
+        </div>
+        <div class="btn-group btn-group-justified">
+          <a class="btn btn-raised btn-primary">&lt;</a>
+          <a class="btn btn-default" id="navigate">
+            <i class="fa fa-bicycle" aria-hidden="true"></i>
+          </a>
+          <a class="btn btn-default">
+            <i class="fa fa-question" aria-hidden="true"></i>
+          </a>
+          <a class="btn btn-raised btn-primary">&gt;</a>
+        </div>
+        <div id="panel-details" class="row">
+          <div class="col-md-3 text-center" id="parking-interest">
+            <i class="fa fa-map-marker" aria-hidden="true"></i>
+            <p>
+
+            </p>
           </div>
-          <h5>
-            Images
-          </h5>
-          <div class="row">
-            <div class="col-lg-3" style="padding: 0">
-              <img style="border: 5px solid black;" width="100%" src="/node_modules/bootstrap-material-design/demo/imgs/banner.jpg" />
-            </div>
-            <div class="col-lg-3" style="padding: 0">
-              <img style="border: 5px solid black; border-left: none;" width="100%" src="/node_modules/bootstrap-material-design/demo/imgs/banner.jpg" />
-            </div>
+          <div class="col-md-3 text-center" id="parking-capacity">
+            <i class="fa fa-bicycle" aria-hidden="true"></i>
+            <p>
+
+            </p>
           </div>
-          <div class="row">
-            <div class="col-lg-3" style="padding: 0">
-              <img style="border: 5px solid black; border-top: none;" width="100%" src="/node_modules/bootstrap-material-design/demo/imgs/banner.jpg" />
-            </div>
-            <div class="col-lg-3" style="padding: 0">
-              <img style="border: 5px solid black; border-left: none; border-top: none;" width="100%" src="/node_modules/bootstrap-material-design/demo/imgs/banner.jpg" />
-            </div>
-          </div>
-          <div class="btn-group btn-group-justified">
-            <a class="btn btn-raised btn-primary">&lt;</a>
-            <a class="btn btn-default">
-              <i class="fa fa-bicycle" aria-hidden="true"></i>
-            </a>
-            <a class="btn btn-default">
-              <i class="fa fa-question" aria-hidden="true"></i>
-            </a>
-            <a class="btn btn-raised btn-primary">&gt;</a>
-          </div>
-          <div id="panel-details">
-            <table>
-              <tbody>
-                <tr>
-                  <th>
-                    Location
-                  </th>
-                  <td>
-                    [Building]
-                  </td>
-                </tr>
-                <tr>
-                  <th>
-                    Rack Number
-                  </th>
-                  <td>
-                    [Capacity]
-                  </td>
-                </tr>
-                <tr>
-                  <th>
-                    Misc
-                  </th>
-                  <td>
-                    [isIndoor/hasRoof] [Shape] [Vacancy (More)]
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <tr>
+            <th>
+              Misc
+            </th>
+            <td>
+              [isIndoor/hasRoof] [Shape] [Vacancy (More)]
+            </td>
+          </tr>
         </div>
       </div>
     </div>
@@ -140,6 +113,7 @@
   <script>
     $.material.init();
     var map;
+    var destination;
 
     function getLocation() {
       if (navigator.geolocation) {
@@ -151,23 +125,70 @@
       setLocation(position.coords.latitude, position.coords.longitude);
     }
 
+    function updateView() {
+      map.entities.clear();
+
+      $.get("http://127.0.0.1:8000/v1/parkings", {
+        latitude: Number(map.getCenter().latitude),
+        longitude: Number(map.getCenter().longitude),
+        range: 0.1
+      }, function(data) {
+        _.each(data, function(t) {
+          var pushpin = new Microsoft.Maps.Pushpin({
+            latitude: t.latitude,
+            longitude: t.longitude
+          }, {
+            color: "#FF5722"
+          });
+          Microsoft.Maps.Events.addHandler(pushpin, 'click', function() {
+            if (history.pushState) {
+              var newurl = window.location.protocol + "//" + window.location.host + window.location.pathname + "?showParking=" + t.parking_id;
+              window.history.pushState({
+                path: newurl
+              }, '', newurl);
+            }
+            showParkingInfo(t.parking_id);
+          });
+          map.entities.push(pushpin);
+        });
+      });
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(p) {
+          var pushpin = new Microsoft.Maps.Pushpin(p.coords, {
+            color: '#4285F4'
+          });
+          map.entities.push(pushpin);
+        });
+      }
+
+      $.get("http://127.0.0.1:8000/v1/interests", {
+        latitude: Number(map.getCenter().latitude),
+        longitude: Number(map.getCenter().longitude),
+        range: 1
+      }, function(data) {
+        _.each(data, function(t) {
+          var pushpin = new Microsoft.Maps.Pushpin({
+            latitude: t.latitude,
+            longitude: t.longitude
+          }, {
+            title: t.display_name
+          });
+          map.entities.push(pushpin);
+        });
+      });
+    }
+
     function setLocation(lat, long) {
       map = new Microsoft.Maps.Map($('#myMap')[0], {
         credentials: 'ArnfSpPwwHiY79noh8ZgFUjEfzp217VUV4So9rQfyt-aXOohl_sXbxtfz9mr6sLp',
         center: new Microsoft.Maps.Location(lat, long),
-        mapTypeId: Microsoft.Maps.MapTypeId.aerial,
+        mapTypeId: Microsoft.Maps.MapTypeId.road,
         zoom: 15
       });
 
-      Microsoft.Maps.Events.addHandler(map, 'viewchangeend', function() {
-        $.get("http://127.0.0.1:8000/v1/parkings", {
-          latitude: Number(map.getCenter().latitude),
-          longitude: Number(map.getCenter().longitude),
-          range: 1000
-        }, function(data) {
-          console.log(data);
-        });
-      });
+      Microsoft.Maps.Events.addHandler(map, 'viewchangeend', updateView);
+      updateView();
     }
 
     $(document).ready(function() {
@@ -175,11 +196,62 @@
         getLocation();
       });
 
-      // var map = new Microsoft.Maps.Map(document.getElementById('myMap'), {
-      //     credentials: 'Your Bing Maps Key'
-      // });
-      // var pushpin = new Microsoft.Maps.Pushpin(map.getCenter(), null);
-      // map.entities.push(pushpin);
+      $("#search").change(function() {
+        // search interest points
+      });
+
+      $("#navigate").click(function() {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(function(p) {
+            Microsoft.Maps.loadModule('Microsoft.Maps.Directions', function() {
+              var directionsManager = new Microsoft.Maps.Directions.DirectionsManager(map);
+              // Set Route Mode to driving
+              directionsManager.setRequestOptions({
+                routeMode: Microsoft.Maps.Directions.RouteMode.driving
+              });
+              var startLoc = new Microsoft.Maps.Location(p.coords.latitude, p.coords.longitude);
+              var endLoc = new Microsoft.Maps.Location(destination.latitude, destination.longitude);
+              var wp1 = new Microsoft.Maps.Directions.Waypoint({
+                address: 'My Location',
+                location: startLoc
+              });
+              var wp2 = new Microsoft.Maps.Directions.Waypoint({
+                address: 'Parking',
+                location: endLoc
+              });
+              directionsManager.addWaypoint(wp1);
+              directionsManager.addWaypoint(wp2);
+              // Set the element in which the itinerary will be rendered
+              directionsManager.setRenderOptions({
+                itineraryContainer: document.getElementById('printoutPanel')
+              });
+              directionsManager.calculateDirections();
+            });
+          });
+        }
+
+      });
+
+    });
+
+    function showParkingInfo(parking_id) {
+      $.getJSON("http://127.0.0.1:8000/v1/parkings/" + parking_id, null, function(p) {
+        $("#parking-interest > p").text(p.interest);
+        $("#parking-capacity > p").text(p.capacity);
+        $("#parking-image").attr("src", p.image);
+        destination = p;
+        $('#parkingInfoPanel').css("top", "-" + ($('#parkingInfoPanel').outerHeight() + 40) + "px");
+        $('#parkingInfoPanel').animateCss('slideInUp');
+      });
+    }
+
+    $.fn.extend({
+      animateCss: function(animationName) {
+        var animationEnd = 'webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend';
+        this.addClass('animated ' + animationName).one(animationEnd, function() {
+          $(this).removeClass('animated ' + animationName);
+        });
+      }
     });
   </script>
 </body>
