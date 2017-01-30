@@ -11,6 +11,7 @@
 
   <!-- Latest compiled and minified CSS -->
   <link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="./styles.css?v=221">
 
   <!-- Optional theme -->
   <link rel="stylesheet" href="./node_modules/bootstrap-material-design/dist/css/bootstrap-material-design.min.css">
@@ -27,7 +28,7 @@
 </head>
 
 <body onload="setLocation(42.4534492,-76.4756914);">
-  <div class="navbar navbar-warning" style="margin: 0; width: 100%; z-index: 100; position: fixed;">
+  <div class="navbar light" style="margin: 0; width: 100%; z-index: 100; position: fixed;">
     <div class="container-fluid">
       <div class="navbar-header">
         <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-responsive-collapse">
@@ -45,12 +46,12 @@
         </form>
         <ul class="nav navbar-nav">
           <li>
-            <a id="useMyLocation" href="javascript:void(0)">
+            <!-- <a id="useMyLocation" href="javascript:void(0)">
               <i class="fa fa-location-arrow" aria-hidden="true"></i>
-            </a>
+            </a> -->
           </li>
         </ul>
-        <ul class="nav navbar-nav navbar-right">
+        <!-- <ul class="nav navbar-nav navbar-right">
           <li class="dropdown">
             <a href="http://fezvrasta.github.io/bootstrap-material-design/bootstrap-elements.html" data-target="#" class="dropdown-toggle" data-toggle="dropdown">More
               <b class="caret"></b></a>
@@ -62,7 +63,7 @@
               <li><a href="javascript:void(0)">Separated link</a></li>
             </ul>
           </li>
-        </ul>
+        </ul> -->
       </div>
     </div>
   </div>
@@ -114,31 +115,24 @@
     $.material.init();
     var map;
     var destination;
-
-    function getLocation() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(showPosition);
-      }
-    }
-
-    function showPosition(position) {
-      setLocation(position.coords.latitude, position.coords.longitude);
-    }
+    var searchResults;
+    var myLocationIndex = -1;
 
     function updateView() {
+      var bounds = map.getBounds().bounds;
       map.entities.clear();
 
       $.get("http://127.0.0.1:8000/v1/parkings", {
         latitude: Number(map.getCenter().latitude),
         longitude: Number(map.getCenter().longitude),
-        range: 0.1
+        range: Math.max(bounds[0] - bounds[2], bounds[1] - bounds[3])
       }, function(data) {
         _.each(data, function(t) {
           var pushpin = new Microsoft.Maps.Pushpin({
             latitude: t.latitude,
             longitude: t.longitude
           }, {
-            color: "#FF5722"
+            icon: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAABHNCSVQICAgIfAhkiAAAASBJREFUKJGVks8rg3Ecx1/Pt+ExPxZryUqTw7OStpS4+APktpBSzu5u7hycSNxXT8rJyXVF5LLYxXJjNa0J49k8y+L5fJ1MsUf53N593q9P73d9jHBiPt0dHV82lFL8MVpEXks524jNbHiGUspeX2R0ZODboDVPTp2Tixt2D86pug20iAS+Lvd2mfSHgrx/eFTdBmZHG1YsghWLMDk2RGrVBtUiRjZ/x8TSDomFLeyjSwCSVpSkNQiAb27Rmmy+2NR9PSYAgZ/GcCjI7HScTrOdlbkpADxPuC48tAbiwxH21lJN7YmwmT6m/FhrDRTvXzjMXKE1VJw6p7lbCqXn5v43UHbY3j/zq+Zf2hfQIgJQdd+oOHVqbsPXrEXE+O9rfAITTXK581LbegAAAABJRU5ErkJggg=='
           });
           Microsoft.Maps.Events.addHandler(pushpin, 'click', function() {
             if (history.pushState) {
@@ -153,26 +147,38 @@
         });
       });
 
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function(p) {
-          var pushpin = new Microsoft.Maps.Pushpin(p.coords, {
-            color: '#4285F4'
+      if (searchResults) {
+        _.each(searchResults, function(result) {
+          $.getJSON("http://127.0.0.1:8000/v1/interests/" + result.result_id, function(t) {
+            var pushpin = new Microsoft.Maps.Pushpin({
+              latitude: t.latitude,
+              longitude: t.longitude
+            }, {
+              title: t.display_name,
+              icon: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAoCAYAAADg+OpoAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4QEeBg8nunW+jQAABMtJREFUWMO1l99rk1cYxz/nbdIkzdsfWm2Jw3Udg2GdP9aq1A0SWNlVYbobRbCr6HbjGHijKPoP6IYXQ+eNo4KD3njhhcELYVonLWn8MUdnhXWasiKjtbRvkrdJm7d5dnH6mlDr+it+4SFw8p7nc77POe8551Usrm3AZ0AY2Ob3+zcCZLPZEeB34C7wK/CYlUgp1QAMm6YpkUhE+uNxcRxHXDmOI/3xuEQiETFNU4DhuT7LUpdSSq5cuaKzWpbIs2ciIyMi6bSOkRHdZlkiItLV1SVKKQG6Fhz4Am2J3bt3N/T29kIiAdEobNgA69bB+vVQXa2fsiwYG4OXL+HFC2hvh/feo7W1lVgslgAai5OWzYMOnTx5srG7uxvOnoXeXggGobwcPB5QCmZmYGoK0mlIJiGVAtuGnh548ICvu7pIp9M1fX19B4ELCzm6sKOl5dv4/ftw9KhOVFcHtbWwdi3U1EBlJfh8+unpaQ2xLBgf1zE6qgd26RItLS08fPjwAvBdMeh9r9f798zMDOzbpzu4kDVrNKSqCioqwOvVPRxHO0kmYXISJiYKsFAIurspLy/HcZxGEUm4pYtdvHixdodhwPnzetQeDxiGLlc+D7OzumyZjC5dKqUhlqUjmSzE06fQ1kZtUxPRaPQL4EcFbA4EAgNTU1N6tLW1OmpqtJvKSu0mEAC/Xw/AdZTNarA7VxMT2p1bylwO0zSxbXuzB2jbuWsXDAzozslkYeKh4CQQKCwKF+Q6tG0NmpzUkUrp/x89YsfOnfTcudNWBhz7pbv7o3evXoVYTD+Qz4OI/nUcyOV0uA5sWy8Wd+UVl9CydGkBgkE+PHaMny9fthTw16zIB8b27fC4aBcJBMA0dQQCet68XigrKzjN5fTqK3aVyRRyNDUxOzCAxzASyu/3T2cymXICAT3iYnk8el5ckMdTAOXzGuS+V9msdl+sqiqwLILBIB6llOfVezFfjqPLY9vajQsS0eGWVGThjSyX07vC3OBGZkVEmprc7qWLhgZx8nkBJg3gybNEArZsoeRqbSUxPAzQD3Dqq85OkZs3S+/oxg3p6OwU4BTAp6FQSB8HpQaJSCgUEuAT12Tqt3v3RI4fLx3kxAnpuXtXALu4mrtM09Su6utXD6mvFxER0zRFKdU8f+oeHzp0SMRxRLzelUP8fpFsVg4fPixzd4rXVAnI9evXRcbGRAxj+RClREZH5dq1awLIXM4FtQFwzpw5o8t48ODSIR0dIiJy+vRpAWaB0GKr/x3gz0g4LIPPn4sMDuokmzaJ+HyFxD6fbuvoEBkclKeJhITDYQGeAPXLuW79ABTuV4uourpalFLfr/Td/mn//v2LQqLRqACx1Wwikfq5pfp/2rp1qwBHVrtjiW3bb4TkcjmpqKiQpUz+Yvpm7969bwTdvn1b3E1ztdpoGIZMT08vCPL5fAJ8XAqQAVjxePw1yPj4uCil8kCwVCfLkfb29tdA586dE+BRKY8wA5ix5r4cXHm9XgFqlppgKcoDg319fa8ahoaGyOVyacAq9cH8ZWNj4ys3Bw4cEOAsb0mZoaEhSaVS7u685EXgWSao/9atW+G6ujqAP+afnqVUQ3Nzs+zZs0eAz3nL+gf4d7mdPCsARed9ki5J/wHQZ28i/gXGBQAAAABJRU5ErkJggg=='
+            });
+            map.entities.push(pushpin);
           });
-          map.entities.push(pushpin);
         });
       }
-
-      $.get("http://127.0.0.1:8000/v1/interests", {
+      $.getJSON("http://127.0.0.1:8000/v1/interests", {
         latitude: Number(map.getCenter().latitude),
         longitude: Number(map.getCenter().longitude),
-        range: 1
+        range: Math.max(bounds[0] - bounds[2], bounds[1] - bounds[3])
       }, function(data) {
+        var pullData = searchResults ? searchResults.map(function(t) {
+          return {
+            interest_id: t.result_id
+          }
+        }) : {};
+        _.pullAllBy(data, pullData, 'interest_id');
         _.each(data, function(t) {
           var pushpin = new Microsoft.Maps.Pushpin({
             latitude: t.latitude,
             longitude: t.longitude
           }, {
-            title: t.display_name
+            title: t.display_name,
+            icon: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAABHNCSVQICAgIfAhkiAAAADdJREFUKJFjNDAwOMNACiBFg4GBwRkmkkxnYGBgIca2CxcumMDYJNswHDSghBJyaFDNBkZSkwYAtq0MLbo7ZiQAAAAASUVORK5CYII='
           });
           map.entities.push(pushpin);
         });
@@ -188,16 +194,53 @@
       });
 
       Microsoft.Maps.Events.addHandler(map, 'viewchangeend', updateView);
+      Microsoft.Maps.Events.addHandler(map, 'maptypechanged', changeNavColor);
+      setTimeout(function() {
+        document.getElementById("LocateMeButton").click();
+      }, 3000);
+
       updateView();
     }
 
+    function changeNavColor(a) {
+      $(".navbar").toggleClass('light');
+    }
+
     $(document).ready(function() {
-      $("#useMyLocation").click(function() {
-        getLocation();
+      $(".navbar-form").bind("keypress", function(e) {
+        if (e.keyCode == 13) {
+          return false;
+        }
       });
 
       $("#search").change(function() {
         // search interest points
+        if ($(this).val().trim() === "") {
+          searchResults = undefined;
+          return;
+        }
+        $.getJSON("http://127.0.0.1:8000/v1/search", {
+          keyword: $(this).val().trim()
+        }, function(t) {
+          // searchResults = t;
+          // updateView();
+        });
+      });
+
+      $('#search').keypress(function(e) {
+        if (e.which == 13) {
+          // Enter key pressed
+          if ($(this).val().trim() === "") {
+            searchResults = undefined;
+            return;
+          }
+          $.getJSON("http://127.0.0.1:8000/v1/search", {
+            keyword: $(this).val().trim()
+          }, function(t) {
+            searchResults = t;
+            updateView();
+          });
+        }
       });
 
       $("#navigate").click(function() {
@@ -207,7 +250,7 @@
               var directionsManager = new Microsoft.Maps.Directions.DirectionsManager(map);
               // Set Route Mode to driving
               directionsManager.setRequestOptions({
-                routeMode: Microsoft.Maps.Directions.RouteMode.driving
+                routeMode: Microsoft.Maps.Directions.RouteMode.walking
               });
               var startLoc = new Microsoft.Maps.Location(p.coords.latitude, p.coords.longitude);
               var endLoc = new Microsoft.Maps.Location(destination.latitude, destination.longitude);
@@ -216,7 +259,7 @@
                 location: startLoc
               });
               var wp2 = new Microsoft.Maps.Directions.Waypoint({
-                address: 'Parking',
+                address: '',
                 location: endLoc
               });
               directionsManager.addWaypoint(wp1);

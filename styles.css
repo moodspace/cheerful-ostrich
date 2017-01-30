@@ -1,0 +1,26 @@
+div.labelToggle_Container label {
+    display: inline-table;
+}
+
+div.NavBar_MapTypeButtonContainerWrapper {
+    position: relative;
+    left: -32px;
+}
+
+.navbar {
+    background-color: #111 !important;
+    color: #fff !important;
+}
+
+.navbar.light {
+    background-color: #fff !important;
+    color: #111 !important;
+}
+
+.navbar input::-webkit-input-placeholder {
+  color: #aaa !important;
+}
+
+.navbar.light input::-webkit-input-placeholder {
+    color: #666 !important;
+}
